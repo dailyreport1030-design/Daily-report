@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Daily Report Dashboard</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+:root{
+    --bg:#f4f6fa;
+    --white:#ffffff;
+    --text:#172033;
+    --muted:#7b8494;
+    --border:#e6e9ef;
+
+    --purple:#5b4df5;
+    --blue:#2674f2;
+    --green:#16a66a;
+    --orange:#f28b27;
+
+    --shadow:0 10px 30px rgba(20,30,50,.07);
+}
+
+body{
+    margin:0;
+    min-height:100vh;
+    background:
+        radial-gradient(
+            circle at 50% -10%,
+            rgba(91,77,245,.08),
+            transparent 35%
+        ),
+        var(--bg);
+
+    font-family:
+        Inter,
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    color:var(--text);
+}
+
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+.report-nav{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+
+    padding:20px 20px 10px;
+
+    /* Keep navbar stable while scrolling */
+    position:sticky;
+    top:0;
+    z-index:1000;
+
+    background:var(--bg);
+}
+
+
+/* =====================================================
+   NAV BUTTONS
+===================================================== */
+
+.report-btn{
+    position:relative;
+
+    width:190px;
+    min-height:60px;
+
+    border:none;
+    border-radius:14px;
+
+    cursor:pointer;
+
+    color:#fffefe;
+
+    text-align:left;
+
+    padding:11px 14px;
+
+    overflow:hidden;
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        filter .2s ease;
+}
+
+.report-btn:hover{
+    transform:translateY(-3px);
+    filter:saturate(1.08);
+}
+
+.report-btn.active{
+    transform:translateY(-3px) scale(1.015);
+
+    filter:
+        saturate(1.12)
+        brightness(1.03);
+
+    outline:3px solid rgba(0,0,0,.96);
+    outline-offset:3px;
+
+    box-shadow:
+        0 0 0 5px
+        var(--active-ring,rgba(91,77,245,.16)),
+        0 14px 30px rgba(15,23,42,.16);
+
+    z-index:2;
+}
+
+.report-btn.active::after{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    border-radius:14px;
+
+    border:2px solid rgb(255,255,255);
+
+    pointer-events:none;
+}
+
+.report-btn.active .btn-arrow{
+    opacity:1;
+
+    transform:translateX(2px);
+
+    transition:
+        transform .2s ease,
+        opacity .2s ease;
+}
+
+
+/* =====================================================
+   BUTTON COLORS
+===================================================== */
+
+.report-btn.allover{
+    --active-ring:rgba(91,77,245,.22);
+
+    background:
+        linear-gradient(
+            135deg,
+            #5b4df5,
+            #7668ff
+        );
+
+    box-shadow:
+        0 9px 22px rgba(91,77,245,.24);
+}
+
+.report-btn.intent{
+    --active-ring:rgba(38,116,242,.22);
+
+    background:
+        linear-gradient(
+            135deg,
+            #1677e8,
+            #3695ff
+        );
+
+    box-shadow:
+        0 9px 22px rgba(38,116,242,.22);
+}
+
+.report-btn.payin{
+    --active-ring:rgba(22,166,106,.22);
+
+    background:
+        linear-gradient(
+            135deg,
+            #079b67,
+            #20c47f
+        );
+
+    box-shadow:
+        0 9px 22px rgba(22,166,106,.21);
+}
+
+.report-btn.payout{
+    --active-ring:rgba(242,139,39,.22);
+
+    background:
+        linear-gradient(
+            135deg,
+            #ed7620,
+            #ff9b3f
+        );
+
+    box-shadow:
+        0 9px 22px rgba(242,139,39,.22);
+}
+
+
+/* =====================================================
+   BUTTON CONTENT
+===================================================== */
+
+.btn-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.btn-icon{
+    width:30px;
+    height:30px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:rgba(255,255,255,.17);
+
+    border:1px solid rgba(255,255,255,.18);
+
+    border-radius:9px;
+
+    font-size:13px;
+    font-weight:900;
+}
+
+.btn-arrow{
+    font-size:15px;
+    opacity:.75;
+}
+
+.btn-title{
+    margin-top:8px;
+
+    font-size:12px;
+    font-weight:850;
+
+    letter-spacing:.2px;
+}
+
+.btn-desc{
+    margin-top:2px;
+
+    font-size:9px;
+
+    opacity:.78;
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   DIVIDER
+===================================================== */
+
+.divider{
+    width:calc(100% - 50px);
+    max-width:1150px;
+
+    height:1px;
+
+    background:var(--border);
+
+    margin:0 auto 10px;
+}
+
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.content{
+    width:calc(100% - 40px);
+    max-width:1400px;
+
+    margin:0 auto 15px;
+}
+
+.content-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 5px 8px;
+}
+
+.current-page{
+    display:flex;
+    align-items:center;
+    gap:9px;
+}
+
+.current-dot{
+    width:8px;
+    height:8px;
+
+    border-radius:50%;
+
+    background:#20b26b;
+
+    box-shadow:
+        0 0 0 4px rgba(32,178,107,.10);
+}
+
+.current-page span{
+    font-size:11px;
+    font-weight:750;
+    color:#667085;
+}
+
+
+/* =====================================================
+   FRAME
+===================================================== */
+
+.frame-card{
+    position:relative;
+
+    width:100%;
+
+    height:calc(100vh - 105px);
+
+    min-height:480px;
+
+    background:white;
+
+    border:1px solid var(--border);
+
+    border-radius:16px;
+
+    overflow:hidden;
+
+    box-shadow:var(--shadow);
+}
+
+iframe{
+    width:100%;
+    height:100%;
+
+    border:0;
+
+    display:block;
+
+    background:white;
+}
+
+
+/* =====================================================
+   LOADER
+===================================================== */
+
+.loader{
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:rgba(248,249,252,.78);
+
+    backdrop-filter:blur(4px);
+
+    z-index:10;
+
+    opacity:0;
+    visibility:hidden;
+
+    transition:.2s ease;
+}
+
+.loader.show{
+    opacity:1;
+    visibility:visible;
+}
+
+.loader-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    padding:15px 18px;
+
+    background:white;
+
+    border:1px solid var(--border);
+
+    border-radius:12px;
+
+    box-shadow:
+        0 10px 28px
+        rgba(15,23,42,.10);
+
+    font-size:12px;
+    font-weight:700;
+
+    color:#596579;
+}
+
+.spinner{
+    width:17px;
+    height:17px;
+
+    border-radius:50%;
+
+    border:2px solid #e8eaf0;
+
+    border-top-color:var(--purple);
+
+    animation:
+        spin .7s linear infinite;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media(max-width:850px){
+
+    .report-nav{
+        display:grid;
+
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+
+        gap:9px;
+
+        padding:
+            20px 14px 10px;
+
+        position:sticky;
+        top:0;
+        z-index:1000;
+
+        background:var(--bg);
+    }
+
+    .report-btn{
+        width:100%;
+        min-height:58px;
+    }
+
+    .divider{
+        width:calc(100% - 28px);
+    }
+
+    .content{
+        width:calc(100% - 20px);
+    }
+
+    .frame-card{
+        height:calc(100vh - 195px);
+
+        min-height:420px;
+    }
+}
+
+
+@media(max-width:480px){
+
+    .btn-title{
+        font-size:10px;
+    }
+
+    .btn-desc{
+        font-size:8px;
+    }
+
+    .btn-icon{
+        width:28px;
+        height:28px;
+    }
+
+    .report-nav{
+        gap:8px;
+    }
+}
+</style>
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     REPORT NAVIGATION — TOP
+===================================================== -->
+
+<nav class="report-nav">
+
+    <button
+        class="report-btn allover active"
+        aria-current="page"
+        onclick="openReport(
+            this,
+            'alloverPayin.html',
+            'ALL OVER PAYIN'
+        )">
+
+        <div class="btn-top">
+
+            <span class="btn-icon">
+                A
+            </span>
+
+            <span class="btn-arrow">
+                ↗
+            </span>
+
+        </div>
+
+        <div class="btn-title">
+            ALL OVER PAYIN
+        </div>
+
+        <div class="btn-desc">
+            Complete payin report
+        </div>
+
+    </button>
+
+
+    <button
+        class="report-btn intent"
+        onclick="openReport(
+            this,
+            'intent.html',
+            'INTENT PAYIN'
+        )">
+
+        <div class="btn-top">
+
+            <span class="btn-icon">
+                I
+            </span>
+
+            <span class="btn-arrow">
+                ↗
+            </span>
+
+        </div>
+
+        <div class="btn-title">
+            INTENT PAYIN
+        </div>
+
+        <div class="btn-desc">
+            Intent transaction report
+        </div>
+
+    </button>
+
+
+    <button
+        class="report-btn payin"
+        onclick="openReport(
+            this,
+            'payin.html',
+            'PAYIN OVERVIEW'
+        )">
+
+        <div class="btn-top">
+
+            <span class="btn-icon">
+                P
+            </span>
+
+            <span class="btn-arrow">
+                ↗
+            </span>
+
+        </div>
+
+        <div class="btn-title">
+            PAYIN OVERVIEW
+        </div>
+
+        <div class="btn-desc">
+            Daily payin overview
+        </div>
+
+    </button>
+
+
+    <button
+        class="report-btn payout"
+        onclick="openReport(
+            this,
+            'payout.html',
+            'PAYOUT'
+        )">
+
+        <div class="btn-top">
+
+            <span class="btn-icon">
+                O
+            </span>
+
+            <span class="btn-arrow">
+                ↗
+            </span>
+
+        </div>
+
+        <div class="btn-title">
+            PAYOUT
+        </div>
+
+        <div class="btn-desc">
+            Payout report
+        </div>
+
+    </button>
+
+</nav>
+
+
+<div class="divider"></div>
+
+
+<!-- =====================================================
+     CURRENT PAGE
+===================================================== -->
+
+<section class="content">
+
+    <div class="content-top">
+
+        <div class="current-page">
+
+            <span class="current-dot"></span>
+
+            <span id="currentTitle">
+                ALL OVER PAYIN
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         REPORT PREVIEW
+    ================================================= -->
+
+    <div class="frame-card">
+
+        <div
+            class="loader"
+            id="loader">
+
+            <div class="loader-box">
+
+                <span class="spinner"></span>
+
+                Loading report...
+
+            </div>
+
+        </div>
+
+
+        <iframe
+            id="reportFrame"
+            src="alloverPayin.html"
+            title="Daily Report">
+        </iframe>
+
+    </div>
+
+</section>
+
+
+<script>
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const frame =
+    document.getElementById("reportFrame");
+
+const loader =
+    document.getElementById("loader");
+
+const currentTitle =
+    document.getElementById("currentTitle");
+
+
+/* =====================================================
+   CHANGE REPORT
+===================================================== */
+
+function openReport(
+    button,
+    file,
+    title
+){
+
+    loader.classList.add("show");
+
+
+    /* Active button */
+
+    document
+        .querySelectorAll(".report-btn")
+        .forEach(btn => {
+
+            btn.classList.remove("active");
+
+        });
+
+
+    button.classList.add("active");
+
+
+    document
+        .querySelectorAll(".report-btn")
+        .forEach(btn =>
+            btn.removeAttribute("aria-current")
+        );
+
+
+    button.setAttribute(
+        "aria-current",
+        "page"
+    );
+
+
+    /* Current report */
+
+    currentTitle.textContent =
+        title;
+
+
+    /* Load page */
+
+    frame.src =
+        file;
+}
+
+
+/* =====================================================
+   LOADED
+===================================================== */
+
+frame.addEventListener(
+    "load",
+    function(){
+
+        setTimeout(
+            function(){
+
+                loader.classList.remove(
+                    "show"
+                );
+
+            },
+            220
+        );
+
+    }
+);
+
+
+/* =====================================================
+   INITIAL LOADING
+===================================================== */
+
+window.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        loader.classList.add("show");
+
+        setTimeout(
+            function(){
+
+                loader.classList.remove(
+                    "show"
+                );
+
+            },
+            400
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>

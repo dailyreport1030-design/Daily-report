@@ -1,0 +1,2496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Enterprise Merchant Analytics</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- CSV -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<!-- Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Image Export -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<style>
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+*{
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  font-family:Inter,Arial,Helvetica,sans-serif;
+  background:
+    radial-gradient(circle at top left,rgba(37,99,235,.08),transparent 30%),
+    linear-gradient(135deg,#f5f7fb 0%,#eef2f7 100%);
+  color:#172033;
+}
+
+button,
+input,
+select,
+textarea{
+  font-family:inherit;
+}
+
+.container{
+  width:min(1240px,calc(100% - 30px));
+  margin:auto;
+  padding:20px 0 35px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.dashboard-header{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(135deg,#0f172a,#172554 55%,#1e3a8a);
+  border-radius:18px;
+  padding:25px 28px;
+  margin-bottom:18px;
+  color:#fff;
+  box-shadow:0 12px 35px rgba(15,23,42,.18);
+}
+
+.dashboard-header::before{
+  content:"";
+  position:absolute;
+  width:230px;
+  height:230px;
+  right:-80px;
+  top:-100px;
+  border-radius:50%;
+  background:rgba(255,255,255,.07);
+}
+
+.dashboard-header::after{
+  content:"";
+  position:absolute;
+  width:140px;
+  height:140px;
+  left:40%;
+  bottom:-100px;
+  border-radius:50%;
+  background:rgba(96,165,250,.10);
+}
+
+.header-content{
+  position:relative;
+  z-index:2;
+}
+
+.header-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 11px;
+  border-radius:20px;
+  background:rgba(255,255,255,.11);
+  border:1px solid rgba(255,255,255,.13);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+}
+
+.dashboard-header h1{
+  margin:12px 0 5px;
+  font-size:28px;
+  line-height:1.15;
+  letter-spacing:-.6px;
+}
+
+.dashboard-header p{
+  margin:0;
+  color:#cbd5e1;
+  font-size:13px;
+}
+
+
+/* =========================================================
+   GENERAL BOX
+========================================================= */
+
+.box{
+  background:rgba(255,255,255,.96);
+  padding:18px;
+  border-radius:15px;
+  margin-bottom:15px;
+  border:1px solid #e4e9f1;
+  box-shadow:
+    0 5px 20px rgba(15,23,42,.05),
+    0 1px 3px rgba(15,23,42,.04);
+}
+
+.section-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:14px;
+}
+
+.section-heading h3{
+  margin:0;
+  font-size:15px;
+  color:#172033;
+}
+
+.section-heading span{
+  font-size:11px;
+  color:#64748b;
+}
+
+
+/* =========================================================
+   FILE UPLOAD
+========================================================= */
+
+.upload-box{
+  position:relative;
+  overflow:hidden;
+}
+
+.upload-grid{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:20px;
+  align-items:center;
+}
+
+.upload-content h2{
+  margin:0 0 6px;
+  font-size:18px;
+  color:#172033;
+}
+
+.upload-content p{
+  margin:0;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.6;
+}
+
+.upload-limits{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+.limit-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 10px;
+  border-radius:8px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  color:#475569;
+  font-size:11px;
+  font-weight:700;
+}
+
+.limit-badge.csv{
+  background:#eff6ff;
+  color:#1d4ed8;
+  border-color:#bfdbfe;
+}
+
+.limit-badge.excel{
+  background:#ecfdf5;
+  color:#047857;
+  border-color:#a7f3d0;
+}
+
+.file-input-wrap{
+  min-width:290px;
+}
+
+.file-input-label{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:52px;
+  padding:0 18px;
+  border:1.5px dashed #94a3b8;
+  border-radius:11px;
+  background:#f8fafc;
+  cursor:pointer;
+  color:#334155;
+  font-size:12px;
+  font-weight:700;
+  transition:.2s ease;
+}
+
+.file-input-label:hover{
+  background:#eff6ff;
+  border-color:#3b82f6;
+  color:#1d4ed8;
+}
+
+.file-input-label.drag-over{
+  background:#eff6ff;
+  border-color:#2563eb;
+  color:#1d4ed8;
+  box-shadow:0 0 0 3px rgba(37,99,235,.10);
+}
+
+.file-input-label input{
+  display:none;
+}
+
+.file-status{
+  margin-top:10px;
+  font-size:11px;
+  color:#64748b;
+  text-align:right;
+}
+
+.file-status strong{
+  color:#172033;
+}
+
+
+/* =========================================================
+   NOTIFICATION
+========================================================= */
+
+.notification{
+  display:none;
+  padding:12px 14px;
+  border-radius:10px;
+  margin-bottom:15px;
+  font-size:12px;
+  font-weight:700;
+  align-items:center;
+  gap:9px;
+}
+
+.notification.show{
+  display:flex;
+}
+
+.notification.error{
+  background:#fef2f2;
+  border:1px solid #fecaca;
+  color:#b91c1c;
+}
+
+.notification.success{
+  background:#ecfdf5;
+  border:1px solid #a7f3d0;
+  color:#047857;
+}
+
+.notification.info{
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  color:#1d4ed8;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+.summary{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+}
+
+.card{
+  position:relative;
+  overflow:hidden;
+  background:#fff;
+  padding:17px 13px;
+  border-radius:12px;
+  text-align:center;
+  border:1px solid #e5e7eb;
+  box-shadow:0 3px 12px rgba(15,23,42,.04);
+  font-size:11px;
+  color:#64748b;
+}
+
+.card::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:3px;
+  background:#2563eb;
+}
+
+.card:nth-child(2)::before{
+  background:#16a34a;
+}
+
+.card:nth-child(3)::before{
+  background:#dc2626;
+}
+
+.card:nth-child(4)::before{
+  background:#f59e0b;
+}
+
+.card:nth-child(5)::before{
+  background:#7c3aed;
+}
+
+.card b{
+  display:block;
+  margin-top:7px;
+  font-size:21px;
+  color:#172033;
+}
+
+
+/* =========================================================
+   CHART
+========================================================= */
+
+.chart-box{
+  min-height:430px;
+}
+
+.chart-toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:15px;
+}
+
+.chart-title{
+  font-size:15px;
+  font-weight:800;
+  color:#172033;
+}
+
+.chart-subtitle{
+  font-size:11px;
+  color:#64748b;
+  margin-top:3px;
+}
+
+.chart-select{
+  min-width:190px;
+  padding:9px 12px;
+  border:1px solid #d8dee9;
+  border-radius:9px;
+  background:#fff;
+  color:#334155;
+  font-size:12px;
+  font-weight:700;
+  outline:none;
+}
+
+.chart-select:focus{
+  border-color:#3b82f6;
+  box-shadow:0 0 0 3px rgba(59,130,246,.1);
+}
+
+.chart-container{
+  position:relative;
+  height:340px;
+  width:100%;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+
+button{
+  padding:10px 15px;
+  border:0;
+  border-radius:8px;
+  color:#fff;
+  background:#0f172a;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:700;
+  transition:.2s ease;
+}
+
+button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 5px 15px rgba(15,23,42,.15);
+}
+
+.btn-report{
+  background:#2563eb;
+}
+
+.btn-copy{
+  background:#475569;
+}
+
+.btn-download{
+  background:#0f172a;
+}
+
+#reportBox{
+  width:100%;
+  margin-top:12px;
+  padding:12px;
+  min-height:145px;
+  resize:vertical;
+  border:1px solid #dce2ea;
+  border-radius:9px;
+  background:#f8fafc;
+  color:#334155;
+  font-family:Consolas,monospace;
+  font-size:11px;
+  line-height:1.55;
+  outline:none;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table-wrapper{
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+  min-width:680px;
+}
+
+th,
+td{
+  padding:11px 10px;
+  text-align:center;
+  border-bottom:1px solid #edf0f4;
+}
+
+th{
+  background:#172033;
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+
+tbody tr:hover{
+  background:#f8fafc;
+}
+
+td{
+  color:#475569;
+}
+
+td:first-child{
+  color:#172033;
+  font-weight:700;
+}
+
+
+/* =========================================================
+   EXPORT AREA
+   IMPORTANT: EXISTING REPORT DESIGN KEPT SAME
+========================================================= */
+
+#exportArea{
+  width:100%;
+  max-width:1200px;
+  margin:auto;
+  background:#0f172a;
+  color:white;
+  padding:20px;
+  border-radius:12px;
+}
+
+.export-title{
+  text-align:center;
+  margin-bottom:15px;
+}
+
+.export-title h1{
+  font-size:20px;
+  margin:0;
+}
+
+.kpi{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.kpi div{
+  background:#1e293b;
+  padding:14px;
+  border-radius:10px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  min-height:80px;
+}
+
+.kpi span{
+  font-size:12px;
+  opacity:.8;
+}
+
+.kpi b{
+  font-size:18px;
+  margin-top:5px;
+}
+
+.green{
+  background:#16a34a !important;
+}
+
+.red{
+  background:#dc2626 !important;
+}
+
+.yellow{
+  background:#f59e0b !important;
+}
+
+.blue{
+  background:#3b82f6 !important;
+}
+
+#exp_table{
+  background:white;
+  color:black;
+  padding:10px;
+  border-radius:10px;
+  overflow-x:auto;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loading-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(15,23,42,.55);
+  backdrop-filter:blur(4px);
+  align-items:center;
+  justify-content:center;
+}
+
+.loading-overlay.show{
+  display:flex;
+}
+
+.loading-card{
+  width:min(360px,calc(100% - 40px));
+  background:#fff;
+  border-radius:15px;
+  padding:25px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+
+.spinner{
+  width:38px;
+  height:38px;
+  border:4px solid #e2e8f0;
+  border-top-color:#2563eb;
+  border-radius:50%;
+  margin:0 auto 14px;
+  animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+.loading-card h3{
+  margin:0 0 5px;
+  color:#172033;
+  font-size:15px;
+}
+
+.loading-card p{
+  margin:0;
+  color:#64748b;
+  font-size:11px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:1000px){
+
+  .summary{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .kpi{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+}
+
+@media(max-width:900px){
+
+  .upload-grid{
+    grid-template-columns:1fr;
+  }
+
+  .file-input-wrap{
+    min-width:0;
+    width:100%;
+  }
+
+  .file-status{
+    text-align:left;
+  }
+
+}
+
+@media(max-width:650px){
+
+  .container{
+    width:min(100% - 20px,1240px);
+    padding-top:10px;
+  }
+
+  .dashboard-header{
+    padding:20px;
+    border-radius:14px;
+  }
+
+  .dashboard-header h1{
+    font-size:22px;
+  }
+
+  .summary{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .kpi{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .chart-toolbar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .chart-select{
+    width:100%;
+  }
+
+  .chart-container{
+    height:300px;
+  }
+
+  .box{
+    padding:14px;
+  }
+
+}
+
+@media(max-width:420px){
+
+  .summary{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .summary .card{
+    padding:13px 8px;
+  }
+
+  .summary .card b{
+    font-size:18px;
+  }
+
+  .kpi{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+}
+
+
+/* =========================================================
+   PRINT
+========================================================= */
+
+@media print{
+
+  body{
+    background:#fff;
+  }
+
+  .dashboard-header,
+  .upload-box,
+  .notification,
+  .summary,
+  .chart-box,
+  .actions,
+  #reportBox{
+    display:none !important;
+  }
+
+  #exportArea{
+    display:block !important;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <h3>Processing File</h3>
+    <p id="loadingText">Please wait while your report is being prepared...</p>
+  </div>
+</div>
+
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="dashboard-header">
+
+    <div class="header-content">
+
+      <div class="header-badge">
+        ● 
+      </div>
+
+      <h1>OVERALL PAY-IN STATUS OVERVIEW</h1>
+
+      <!-- <p>
+        Merchant payment operations, transaction status and performance reporting center
+      </p> -->
+
+    </div>
+
+  </header>
+
+
+  <!-- NOTIFICATION -->
+  <div id="notification" class="notification"></div>
+
+
+  <!-- FILE UPLOAD -->
+  <div class="box upload-box">
+
+    <div class="upload-grid">
+
+      <div class="upload-content">
+
+        <h2>Upload Transaction Report</h2>
+
+        <!-- <p>
+          Upload your merchant transaction data in CSV or Excel format.
+          The dashboard automatically calculates transaction status,
+          merchant performance and success rates.
+        </p> -->
+
+        <div class="upload-limits">
+
+          <span class="limit-badge csv">
+            CSV • Maximum 100 MB
+          </span>
+
+          <span class="limit-badge excel">
+            Excel • Maximum 50 MB
+          </span>
+
+          <span class="limit-badge">
+            .CSV / .XLS / .XLSX
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="file-input-wrap">
+
+        <label class="file-input-label">
+
+          <span>
+            📁 Choose CSV / Excel File<br>
+            <small style="font-weight:600;color:#64748b;">or drag &amp; drop your file here</small>
+          </span>
+
+          <input
+            type="file"
+            id="csvFile"
+            accept=".csv,.xls,.xlsx"
+          >
+
+        </label>
+
+        <div class="file-status" id="fileStatus">
+          No file selected
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- SUMMARY -->
+  <div class="box">
+
+    <div class="section-heading">
+      <h3>Transaction Summary</h3>
+      <span>Live calculated metrics</span>
+    </div>
+
+    <div class="summary" id="summary">
+
+      <div class="card">
+        Total Txns
+        <b>0</b>
+      </div>
+
+      <div class="card">
+        Success
+        <b>0</b>
+      </div>
+
+      <div class="card">
+        Failed
+        <b>0</b>
+      </div>
+
+      <div class="card">
+        Processing
+        <b>0</b>
+      </div>
+
+      <div class="card">
+        Rate
+        <b>0%</b>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- CHART -->
+  <div class="box chart-box">
+
+    <div class="chart-toolbar">
+
+      <div>
+
+        <div class="chart-title">
+          Merchant Performance Analytics
+        </div>
+
+        <div class="chart-subtitle">
+          Visual analysis of transaction success and payment status
+        </div>
+
+      </div>
+
+      <select
+        id="chartType"
+        class="chart-select"
+        onchange="renderChart(this.value)"
+      >
+
+        <option value="bar">
+          Merchant Performance
+        </option>
+
+        <option value="pie">
+          Overall Status
+        </option>
+
+        <option value="doughnut">
+          Success vs Failed
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <div class="chart-container">
+      <canvas id="chartCanvas"></canvas>
+    </div>
+
+  </div>
+
+
+  <!-- ACTIONS -->
+  <div class="box">
+
+    <div class="section-heading">
+
+      <h3>Report Actions</h3>
+
+      <span>
+        Generate, copy or download report
+      </span>
+
+    </div>
+
+    <div class="actions">
+
+      <button
+        class="btn-report"
+        onclick="generateReport()"
+      >
+        📄 Generate Report
+      </button>
+
+      <button
+        class="btn-copy"
+        onclick="copyReport()"
+      >
+        📋 Copy
+      </button>
+
+      <button
+        class="btn-download"
+        onclick="downloadFullReport()"
+      >
+        📥 Download Image
+      </button>
+
+    </div>
+
+    <textarea
+      id="reportBox"
+      rows="7"
+      placeholder="Generated report will appear here..."
+    ></textarea>
+
+  </div>
+
+
+  <!-- TABLE -->
+  <div class="box table-wrapper">
+
+    <div class="section-heading">
+
+      <h3>Merchant Performance</h3>
+
+      <span>
+        Merchant-wise transaction breakdown
+      </span>
+
+    </div>
+
+    <table>
+
+      <thead>
+
+        <tr>
+
+          <th>Merchant</th>
+
+          <th>Total Transactions</th>
+
+          <th>Success</th>
+
+          <th>Failed</th>
+
+          <th>Processing</th>
+
+          <th>Success Rate</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody id="table"></tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     EXPORT REPORT
+     SAME STRUCTURE / DESIGN
+========================================================= -->
+
+<div id="exportArea">
+
+  <div class="export-title">
+
+    <h1>
+      📊 OVERALL PAY-IN STATUS OVERVIEW
+    </h1>
+
+    <p id="exp_date"></p>
+
+  </div>
+
+
+  <div class="kpi">
+
+    <div>
+      <span>Total Transactions</span>
+      <b id="t_total"></b>
+    </div>
+
+    <div class="green">
+      <span>Success</span>
+      <b id="t_success"></b>
+    </div>
+
+    <div class="red">
+      <span>Failed</span>
+      <b id="t_failed"></b>
+    </div>
+
+    <div class="yellow">
+      <span>Processing</span>
+      <b id="t_processing"></b>
+    </div>
+
+    <div class="blue">
+      <span>Success Rate</span>
+      <b id="t_rate"></b>
+    </div>
+
+  </div>
+
+
+  <div id="exp_table"></div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   GLOBAL DATA
+========================================================= */
+
+let chart;
+
+let dataMap = {};
+
+let totals = {
+  total:0,
+  success:0,
+  failed:0,
+  processing:0
+};
+
+
+/* =========================================================
+   FILE LIMITS
+========================================================= */
+
+const MAX_CSV_SIZE = 100 * 1024 * 1024;
+
+const MAX_EXCEL_SIZE = 50 * 1024 * 1024;
+
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
+const fileInput = document.getElementById("csvFile");
+
+const notification =
+  document.getElementById("notification");
+
+const fileStatus =
+  document.getElementById("fileStatus");
+
+const loadingOverlay =
+  document.getElementById("loadingOverlay");
+
+const loadingText =
+  document.getElementById("loadingText");
+
+
+/* =========================================================
+   NOTIFICATION
+========================================================= */
+
+function showNotification(message,type="info"){
+
+  notification.className =
+    "notification show " + type;
+
+  notification.innerHTML = message;
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+}
+
+
+function hideNotification(){
+
+  notification.className =
+    "notification";
+
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+function showLoading(message){
+
+  loadingText.innerText = message;
+
+  loadingOverlay.classList.add("show");
+
+}
+
+
+function hideLoading(){
+
+  loadingOverlay.classList.remove("show");
+
+}
+
+
+/* =========================================================
+   FILE SIZE
+========================================================= */
+
+function formatFileSize(bytes){
+
+  if(bytes < 1024 * 1024){
+
+    return (bytes / 1024).toFixed(1) + " KB";
+
+  }
+
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+
+}
+
+
+/* =========================================================
+   FILE UPLOAD
+========================================================= */
+
+const fileDropZone = fileInput.closest(".file-input-label");
+
+["dragenter","dragover"].forEach(eventName => {
+  fileDropZone.addEventListener(eventName,function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    fileDropZone.classList.add("drag-over");
+  });
+});
+
+["dragleave","drop"].forEach(eventName => {
+  fileDropZone.addEventListener(eventName,function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    fileDropZone.classList.remove("drag-over");
+  });
+});
+
+fileDropZone.addEventListener("drop",function(e){
+  const files = e.dataTransfer.files;
+  if(!files || !files.length) return;
+
+  try{
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(files[0]);
+    fileInput.files = dataTransfer.files;
+    fileInput.dispatchEvent(new Event("change",{bubbles:true}));
+  }catch(error){
+    handleDroppedFile(files[0]);
+  }
+});
+
+function handleDroppedFile(file){
+  if(!file) return;
+
+  const fileName = file.name.toLowerCase();
+  const isCSV = fileName.endsWith(".csv");
+  const isExcel = fileName.endsWith(".xls") || fileName.endsWith(".xlsx");
+
+  if(!isCSV && !isExcel){
+    fileStatus.innerText = "Invalid file type";
+    showNotification("❌ Please upload a CSV, XLS or XLSX file.","error");
+    return;
+  }
+
+  if(isCSV && file.size > MAX_CSV_SIZE){
+    fileStatus.innerText = "CSV file exceeds 100 MB";
+    showNotification("❌ CSV file is too large. Maximum allowed size is <strong>100 MB</strong>.","error");
+    return;
+  }
+
+  if(isExcel && file.size > MAX_EXCEL_SIZE){
+    fileStatus.innerText = "Excel file exceeds 50 MB";
+    showNotification("❌ Excel file is too large. Maximum allowed size is <strong>50 MB</strong>.","error");
+    return;
+  }
+
+  fileStatus.innerHTML = "<strong>" + file.name + "</strong> • " + formatFileSize(file.size);
+  hideNotification();
+
+  if(isCSV) processCSV(file);
+  else processExcel(file);
+}
+
+fileInput.addEventListener("change",function(e){
+
+  const file = e.target.files[0];
+
+  if(!file){
+
+    fileStatus.innerText =
+      "No file selected";
+
+    return;
+
+  }
+
+
+  const fileName =
+    file.name.toLowerCase();
+
+  const isCSV =
+    fileName.endsWith(".csv");
+
+  const isExcel =
+    fileName.endsWith(".xls") ||
+    fileName.endsWith(".xlsx");
+
+
+  /* INVALID TYPE */
+
+  if(!isCSV && !isExcel){
+
+    fileInput.value = "";
+
+    fileStatus.innerText =
+      "Invalid file type";
+
+    showNotification(
+      "❌ Please upload a CSV, XLS or XLSX file.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  /* CSV LIMIT */
+
+  if(isCSV && file.size > MAX_CSV_SIZE){
+
+    fileInput.value = "";
+
+    fileStatus.innerText =
+      "CSV file exceeds 100 MB";
+
+    showNotification(
+      "❌ CSV file is too large. Maximum allowed size is <strong>100 MB</strong>.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  /* EXCEL LIMIT */
+
+  if(isExcel && file.size > MAX_EXCEL_SIZE){
+
+    fileInput.value = "";
+
+    fileStatus.innerText =
+      "Excel file exceeds 50 MB";
+
+    showNotification(
+      "❌ Excel file is too large. Maximum allowed size is <strong>50 MB</strong>.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  /* VALID FILE */
+
+  fileStatus.innerHTML =
+    "<strong>" +
+    file.name +
+    "</strong> • " +
+    formatFileSize(file.size);
+
+
+  hideNotification();
+
+
+  if(isCSV){
+
+    processCSV(file);
+
+  }else{
+
+    processExcel(file);
+
+  }
+
+});
+
+
+/* =========================================================
+   RESET DATA
+========================================================= */
+
+function resetData(){
+
+  dataMap = {};
+
+  totals = {
+    total:0,
+    success:0,
+    failed:0,
+    processing:0
+  };
+
+}
+
+
+/* =========================================================
+   PROCESS ROW
+========================================================= */
+
+function processRows(rows){
+
+  resetData();
+
+
+  rows.forEach(r => {
+
+    let merchant =
+      r["Merchant Name"];
+
+    let status =
+      (r["Payment Status"] || "")
+      .toString()
+      .trim()
+      .toLowerCase();
+
+
+    if(!merchant){
+
+      return;
+
+    }
+
+
+    merchant =
+      merchant.toString().trim();
+
+
+    if(!merchant){
+
+      return;
+
+    }
+
+
+    if(!dataMap[merchant]){
+
+      dataMap[merchant] = {
+
+        total:0,
+        success:0,
+        failed:0,
+        processing:0
+
+      };
+
+    }
+
+
+    dataMap[merchant].total++;
+
+    totals.total++;
+
+
+    if(status === "success"){
+
+      dataMap[merchant].success++;
+
+      totals.success++;
+
+    }
+
+    else if(status === "failed"){
+
+      dataMap[merchant].failed++;
+
+      totals.failed++;
+
+    }
+
+    else{
+
+      dataMap[merchant].processing++;
+
+      totals.processing++;
+
+    }
+
+  });
+
+
+  renderSummary();
+
+  renderTable();
+
+  renderChart("bar");
+
+}
+
+
+/* =========================================================
+   LOAD CSV
+========================================================= */
+
+function processCSV(file){
+
+  showLoading(
+    "Reading CSV transaction data..."
+  );
+
+
+  Papa.parse(file,{
+
+    header:true,
+
+    skipEmptyLines:true,
+
+    worker:true,
+
+    chunkSize:1024 * 1024 * 5,
+
+    complete:function(res){
+
+      try{
+
+        processRows(res.data);
+
+        hideLoading();
+
+        showNotification(
+          "✓ CSV loaded successfully. " +
+          formatFileSize(file.size) +
+          " processed.",
+          "success"
+        );
+
+      }catch(error){
+
+        hideLoading();
+
+        showNotification(
+          "❌ Unable to process this CSV file.",
+          "error"
+        );
+
+        console.error(error);
+
+      }
+
+    },
+
+    error:function(error){
+
+      hideLoading();
+
+      showNotification(
+        "❌ CSV reading failed. Please check the file.",
+        "error"
+      );
+
+      console.error(error);
+
+    }
+
+  });
+
+}
+
+
+/* =========================================================
+   LOAD EXCEL
+========================================================= */
+
+function processExcel(file){
+
+  showLoading(
+    "Reading Excel transaction data..."
+  );
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload = function(e){
+
+    try{
+
+      const data =
+        new Uint8Array(e.target.result);
+
+
+      const workbook =
+        XLSX.read(data,{
+          type:"array"
+        });
+
+
+      if(!workbook.SheetNames.length){
+
+        throw new Error(
+          "No worksheet found"
+        );
+
+      }
+
+
+      /*
+       * First worksheet is used.
+       */
+
+      const firstSheet =
+        workbook.Sheets[
+          workbook.SheetNames[0]
+        ];
+
+
+      const rows =
+        XLSX.utils.sheet_to_json(
+          firstSheet,
+          {
+            defval:"",
+            raw:false
+          }
+        );
+
+
+      if(!rows.length){
+
+        hideLoading();
+
+        showNotification(
+          "❌ The Excel sheet appears to be empty.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      /*
+       * Check required columns
+       */
+
+      const firstRow =
+        rows[0];
+
+      const hasMerchant =
+        Object.prototype.hasOwnProperty.call(
+          firstRow,
+          "Merchant Name"
+        );
+
+      const hasStatus =
+        Object.prototype.hasOwnProperty.call(
+          firstRow,
+          "Payment Status"
+        );
+
+
+      if(!hasMerchant || !hasStatus){
+
+        hideLoading();
+
+        showNotification(
+          "❌ Required columns not found. Excel must contain <strong>Merchant Name</strong> and <strong>Payment Status</strong>.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      processRows(rows);
+
+
+      hideLoading();
+
+
+      showNotification(
+        "✓ Excel file loaded successfully. " +
+        formatFileSize(file.size) +
+        " processed.",
+        "success"
+      );
+
+
+    }catch(error){
+
+      hideLoading();
+
+      showNotification(
+        "❌ Unable to read this Excel file. Please check that it is a valid XLS/XLSX file.",
+        "error"
+      );
+
+      console.error(error);
+
+    }
+
+  };
+
+
+  reader.onerror = function(){
+
+    hideLoading();
+
+    showNotification(
+      "❌ Excel file could not be read.",
+      "error"
+    );
+
+  };
+
+
+  reader.readAsArrayBuffer(file);
+
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+function renderSummary(){
+
+  let rate =
+    ((totals.success / totals.total) * 100 || 0)
+    .toFixed(2);
+
+
+  document.getElementById("summary").innerHTML = `
+
+    <div class="card">
+      Total Txns
+      <b>${totals.total.toLocaleString()}</b>
+    </div>
+
+    <div class="card">
+      Success
+      <b>${totals.success.toLocaleString()}</b>
+    </div>
+
+    <div class="card">
+      Failed
+      <b>${totals.failed.toLocaleString()}</b>
+    </div>
+
+    <div class="card">
+      Processing
+      <b>${totals.processing.toLocaleString()}</b>
+    </div>
+
+    <div class="card">
+      Rate
+      <b>${rate}%</b>
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+function renderTable(){
+
+  let html = "";
+
+
+  for(let m in dataMap){
+
+    let d =
+      dataMap[m];
+
+
+    let rate =
+      ((d.success / d.total) * 100 || 0)
+      .toFixed(2);
+
+
+    html += `
+
+      <tr>
+
+        <td>${escapeHTML(m)}</td>
+
+        <td>${d.total.toLocaleString()}</td>
+
+        <td>${d.success.toLocaleString()}</td>
+
+        <td>${d.failed.toLocaleString()}</td>
+
+        <td>${d.processing.toLocaleString()}</td>
+
+        <td>${rate}%</td>
+
+      </tr>
+
+    `;
+
+  }
+
+
+  document.getElementById("table").innerHTML =
+    html;
+
+}
+
+
+/* =========================================================
+   PROFESSIONAL CHART
+========================================================= */
+
+function renderChart(type){
+
+  if(chart){
+
+    chart.destroy();
+
+  }
+
+
+  const canvas =
+    document.getElementById("chartCanvas");
+
+
+  const ctx =
+    canvas.getContext("2d");
+
+
+  const labels =
+    Object.keys(dataMap);
+
+
+  /*
+   * No data
+   */
+
+  if(!labels.length){
+
+    return;
+
+  }
+
+
+  /* =======================================================
+     MERCHANT BAR
+  ======================================================= */
+
+  if(type === "bar"){
+
+    const values =
+      labels.map(m =>
+        Number(
+          (
+            (dataMap[m].success /
+            dataMap[m].total) *
+            100 || 0
+          ).toFixed(2)
+        )
+      );
+
+
+    chart =
+      new Chart(ctx,{
+
+        type:"bar",
+
+        data:{
+
+          labels:labels,
+
+          datasets:[{
+
+            label:"Success Rate (%)",
+
+            data:values,
+
+            borderRadius:7,
+
+            borderSkipped:false,
+
+            backgroundColor:
+              "rgba(37,99,235,.82)",
+
+            hoverBackgroundColor:
+              "rgba(29,78,216,.95)",
+
+            borderWidth:0
+
+          }]
+
+        },
+
+        options:{
+
+          responsive:true,
+
+          maintainAspectRatio:false,
+
+          animation:{
+            duration:700
+          },
+
+          plugins:{
+
+            legend:{
+              display:true,
+              position:"top",
+              align:"end",
+              labels:{
+                usePointStyle:true,
+                boxWidth:8,
+                font:{
+                  size:11,
+                  weight:"600"
+                }
+              }
+            },
+
+            tooltip:{
+
+              backgroundColor:"#0f172a",
+
+              padding:11,
+
+              cornerRadius:8,
+
+              callbacks:{
+
+                label:function(context){
+
+                  return (
+                    " Success Rate: " +
+                    context.parsed.y +
+                    "%"
+                  );
+
+                }
+
+              }
+
+            }
+
+          },
+
+          scales:{
+
+            x:{
+
+              grid:{
+                display:false
+              },
+
+              ticks:{
+                color:"#64748b",
+                font:{
+                  size:10
+                }
+              }
+
+            },
+
+            y:{
+
+              beginAtZero:true,
+
+              max:100,
+
+              grid:{
+                color:"rgba(148,163,184,.15)"
+              },
+
+              ticks:{
+
+                color:"#64748b",
+
+                font:{
+                  size:10
+                },
+
+                callback:function(value){
+
+                  return value + "%";
+
+                }
+
+              }
+
+            }
+
+          }
+
+        }
+
+      });
+
+  }
+
+
+  /* =======================================================
+     OVERALL STATUS
+  ======================================================= */
+
+  else if(type === "pie"){
+
+    chart =
+      new Chart(ctx,{
+
+        type:"pie",
+
+        data:{
+
+          labels:[
+            "Success",
+            "Failed",
+            "Processing"
+          ],
+
+          datasets:[{
+
+            data:[
+              totals.success,
+              totals.failed,
+              totals.processing
+            ],
+
+            backgroundColor:[
+              "#16a34a",
+              "#dc2626",
+              "#f59e0b"
+            ],
+
+            borderColor:"#ffffff",
+
+            borderWidth:4,
+
+            hoverOffset:8
+
+          }]
+
+        },
+
+        options:{
+
+          responsive:true,
+
+          maintainAspectRatio:false,
+
+          plugins:{
+
+            legend:{
+
+              position:"bottom",
+
+              labels:{
+                usePointStyle:true,
+                padding:18,
+                font:{
+                  size:11,
+                  weight:"600"
+                }
+              }
+
+            },
+
+            tooltip:{
+
+              backgroundColor:"#0f172a",
+
+              padding:11,
+
+              callbacks:{
+
+                label:function(context){
+
+                  const value =
+                    context.raw || 0;
+
+                  const percentage =
+                    totals.total
+                    ? ((value / totals.total) * 100)
+                      .toFixed(2)
+                    : 0;
+
+                  return (
+                    " " +
+                    context.label +
+                    ": " +
+                    value.toLocaleString() +
+                    " (" +
+                    percentage +
+                    "%)"
+                  );
+
+                }
+
+              }
+
+            }
+
+          }
+
+        }
+
+      });
+
+  }
+
+
+  /* =======================================================
+     SUCCESS VS FAILED
+  ======================================================= */
+
+  else if(type === "doughnut"){
+
+    chart =
+      new Chart(ctx,{
+
+        type:"doughnut",
+
+        data:{
+
+          labels:[
+            "Success",
+            "Failed"
+          ],
+
+          datasets:[{
+
+            data:[
+              totals.success,
+              totals.failed
+            ],
+
+            backgroundColor:[
+              "#16a34a",
+              "#dc2626"
+            ],
+
+            borderColor:"#ffffff",
+
+            borderWidth:4,
+
+            hoverOffset:8
+
+          }]
+
+        },
+
+        options:{
+
+          responsive:true,
+
+          maintainAspectRatio:false,
+
+          cutout:"66%",
+
+          plugins:{
+
+            legend:{
+
+              position:"bottom",
+
+              labels:{
+                usePointStyle:true,
+                padding:18,
+                font:{
+                  size:11,
+                  weight:"600"
+                }
+              }
+
+            },
+
+            tooltip:{
+
+              backgroundColor:"#0f172a",
+
+              padding:11
+
+            }
+
+          }
+
+        }
+
+      });
+
+  }
+
+}
+
+
+/* =========================================================
+   REPORT
+========================================================= */
+
+function generateReport(){
+
+  let date =
+    new Date().toLocaleDateString();
+
+
+  let text = `DAILY MERCHANT PAYIN REPORT (${date})
+
+TOTAL TRANSACTIONS: ${totals.total}
+SUCCESS: ${totals.success}
+FAILED: ${totals.failed}
+PROCESSING: ${totals.processing}
+
+-------------------------
+MERCHANT WISE REPORT
+-------------------------
+`;
+
+
+  for(let m in dataMap){
+
+    let d =
+      dataMap[m];
+
+
+    let r =
+      ((d.success / d.total) * 100 || 0)
+      .toFixed(2);
+
+
+    text += `
+
+${m}
+Total Transactions: ${d.total}
+Success: ${d.success}
+Failed: ${d.failed}
+Processing: ${d.processing}
+Success Rate: ${r}%
+-------------------------
+`;
+
+  }
+
+
+  document.getElementById("reportBox").value =
+    text;
+
+}
+
+
+/* =========================================================
+   COPY
+========================================================= */
+
+function copyReport(){
+
+  const text =
+    document.getElementById("reportBox").value;
+
+
+  if(!text.trim()){
+
+    showNotification(
+      "Please generate the report first.",
+      "info"
+    );
+
+    return;
+
+  }
+
+
+  navigator.clipboard
+    .writeText(text)
+    .then(()=>{
+
+      showNotification(
+        "✓ Report copied successfully.",
+        "success"
+      );
+
+    })
+    .catch(()=>{
+
+      showNotification(
+        "❌ Unable to copy report.",
+        "error"
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   EXPORT IMAGE
+   DATE REMOVED FROM EXPORT
+========================================================= */
+
+function downloadFullReport(){
+
+  if(!totals.total){
+
+    showNotification(
+      "Please upload a CSV or Excel report first.",
+      "info"
+    );
+
+    return;
+
+  }
+
+
+  let rate =
+    ((totals.success / totals.total) * 100 || 0)
+    .toFixed(2);
+
+
+  document.getElementById("t_total").innerText =
+    totals.total;
+
+  document.getElementById("t_success").innerText =
+    totals.success;
+
+  document.getElementById("t_failed").innerText =
+    totals.failed;
+
+  document.getElementById("t_processing").innerText =
+    totals.processing;
+
+  document.getElementById("t_rate").innerText =
+    rate + "%";
+
+
+  /* DATE REMOVED */
+
+  document.getElementById("exp_date").innerText =
+    "";
+
+
+  let table = `
+    <table
+      border="1"
+      style="
+        width:100%;
+        border-collapse:collapse;
+        text-align:center;
+        font-size:12px;
+      "
+    >
+
+    <tr>
+
+      <th>Merchant</th>
+      <th>Total</th>
+      <th>Success</th>
+      <th>Failed</th>
+      <th>Processing</th>
+      <th>Success Rate</th>
+
+    </tr>
+  `;
+
+
+  for(let m in dataMap){
+
+    let d =
+      dataMap[m];
+
+
+    let r =
+      ((d.success / d.total) * 100 || 0)
+      .toFixed(2);
+
+
+    table += `
+
+      <tr>
+
+        <td>${escapeHTML(m)}</td>
+
+        <td>${d.total}</td>
+
+        <td>${d.success}</td>
+
+        <td>${d.failed}</td>
+
+        <td>${d.processing}</td>
+
+        <td>${r}%</td>
+
+      </tr>
+
+    `;
+
+  }
+
+
+  table += "</table>";
+
+
+  document.getElementById("exp_table").innerHTML =
+    table;
+
+
+  setTimeout(() => {
+
+    html2canvas(
+      document.getElementById("exportArea"),
+      {
+
+        scale:3,
+
+        width:
+          document.getElementById("exportArea")
+          .scrollWidth,
+
+        backgroundColor:"#0f172a",
+
+        useCORS:true
+
+      }
+    )
+    .then(canvas => {
+
+      let link =
+        document.createElement("a");
+
+
+      link.download =
+        `Merchant_Report.png`;
+
+
+      link.href =
+        canvas.toDataURL("image/png");
+
+
+      link.click();
+
+    })
+    .catch(error => {
+
+      console.error(error);
+
+      showNotification(
+        "❌ Unable to generate report image.",
+        "error"
+      );
+
+    });
+
+  },800);
+
+}
+
+
+/* =========================================================
+   HTML ESCAPE
+========================================================= */
+
+function escapeHTML(value){
+
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
+
+renderSummary();
+
+</script>
+
+</body>
+</html>

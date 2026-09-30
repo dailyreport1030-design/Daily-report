@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Payout Dashboard</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- CSV -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<!-- Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Image Export -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f4f7fb;
+  margin:0;
+  padding:28px 20px;
+  color:#172033;
+}
+
+.container{
+  max-width:1250px;
+  margin:auto;
+}
+
+/* HEADER */
+
+.dashboard-header{
+  background:linear-gradient(135deg,#111827,#1e293b);
+  color:#fff;
+  padding:24px 28px;
+  border-radius:16px;
+  margin-bottom:20px;
+  box-shadow:0 8px 25px rgba(15,23,42,.12);
+}
+
+.dashboard-header h2{
+  margin:0 0 7px;
+  font-size:25px;
+  letter-spacing:.3px;
+}
+
+.dashboard-header p{
+  margin:0;
+  color:#cbd5e1;
+  font-size:14px;
+}
+
+/* UPLOAD */
+
+.upload-box{
+  background:#fff;
+  border:1px solid #e5eaf1;
+  padding:20px;
+  border-radius:14px;
+  margin-bottom:18px;
+  box-shadow:0 3px 15px rgba(15,23,42,.05);
+}
+
+.upload-title{
+  font-size:15px;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+
+.file-row{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+}
+
+.file-input{
+  border:1px solid #d7dee9;
+  border-radius:8px;
+  padding:9px;
+  background:#f8fafc;
+  max-width:100%;
+}
+
+.file-info{
+  font-size:13px;
+  color:#64748b;
+}
+
+.file-success{
+  color:#15803d;
+  font-weight:bold;
+}
+
+.file-error{
+  color:#dc2626;
+  font-weight:bold;
+}
+
+/* KPI */
+
+.top-kpi{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:14px;
+  margin-bottom:18px;
+}
+
+.top-kpi div{
+  padding:19px 16px;
+  border-radius:14px;
+  color:white;
+  font-weight:bold;
+  text-align:left;
+  min-height:82px;
+  box-shadow:0 5px 16px rgba(15,23,42,.09);
+  position:relative;
+  overflow:hidden;
+}
+
+.top-kpi div::after{
+  content:"";
+  position:absolute;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:rgba(255,255,255,.12);
+  right:-20px;
+  top:-20px;
+}
+
+.kpi-label{
+  display:block;
+  font-size:12px;
+  opacity:.9;
+  margin-bottom:8px;
+}
+
+.kpi-value{
+  display:block;
+  font-size:20px;
+}
+
+.top-kpi div:nth-child(1){
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+}
+
+.top-kpi div:nth-child(2){
+  background:linear-gradient(135deg,#15803d,#22c55e);
+}
+
+.top-kpi div:nth-child(3){
+  background:linear-gradient(135deg,#d97706,#f59e0b);
+}
+
+.top-kpi div:nth-child(4){
+  background:linear-gradient(135deg,#b91c1c,#ef4444);
+}
+
+.top-kpi div:nth-child(5){
+  background:linear-gradient(135deg,#6d28d9,#8b5cf6);
+}
+
+/* SUMMARY */
+
+.summary{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.card{
+  background:#fff;
+  padding:17px 12px;
+  border-radius:12px;
+  text-align:center;
+  font-weight:bold;
+  border:1px solid #e7ebf2;
+  box-shadow:0 3px 12px rgba(15,23,42,.04);
+}
+
+.card span{
+  display:block;
+  font-size:21px;
+  margin-top:6px;
+  color:#111827;
+}
+
+.card small{
+  display:block;
+  color:#64748b;
+  font-size:11px;
+  font-weight:normal;
+}
+
+/* CONTENT GRID */
+
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:1.25fr .75fr;
+  gap:18px;
+  margin-bottom:18px;
+}
+
+/* BOX */
+
+.box{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  border:1px solid #e5eaf1;
+  box-shadow:0 3px 15px rgba(15,23,42,.05);
+}
+
+.section-title{
+  font-size:16px;
+  font-weight:bold;
+  margin-bottom:4px;
+  color:#111827;
+}
+
+.section-subtitle{
+  font-size:12px;
+  color:#64748b;
+  margin-bottom:15px;
+}
+
+/* CHART */
+
+.chart-container{
+  height:390px;
+  position:relative;
+}
+
+/* ACTIONS */
+
+.action-box{
+  margin-bottom:18px;
+}
+
+.action-buttons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+button{
+  padding:10px 16px;
+  border:none;
+  background:#111827;
+  color:white;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:.2s;
+}
+
+button:hover{
+  background:#2563eb;
+  transform:translateY(-1px);
+}
+
+textarea{
+  width:100%;
+  margin-top:14px;
+  border:1px solid #dce2ea;
+  border-radius:9px;
+  padding:12px;
+  font-family:Arial;
+  resize:vertical;
+}
+
+/* TABLE */
+
+.table-box{
+  overflow:hidden;
+}
+
+.table-wrapper{
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  padding:11px 9px;
+  border-bottom:1px solid #edf0f4;
+  text-align:center;
+  font-size:13px;
+  white-space:nowrap;
+}
+
+th{
+  background:#111827;
+  color:#fff;
+  font-weight:bold;
+}
+
+tbody tr:hover{
+  background:#f8fafc;
+}
+
+td:first-child{
+  font-weight:bold;
+  color:#1e293b;
+}
+
+/* EXPORT AREA
+   SAME AS ORIGINAL
+*/
+
+#exportArea{
+  width:1100px;
+  margin:25px auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+}
+
+.export-title{text-align:center;}
+
+.kpi{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.kpi div{
+  padding:12px;
+  border-radius:10px;
+  color:white;
+  font-weight:bold;
+  text-align:center;
+}
+
+.kpi div:nth-child(1){background:#3b82f6;}
+.kpi div:nth-child(2){background:#07b012;}
+.kpi div:nth-child(3){background:#ff0000;}
+.kpi div:nth-child(4){background:#8b5cf6;}
+.kpi div:nth-child(5){background:#270a6c;}
+.kpi div:nth-child(6){background:#0ea5e9;}
+.kpi div:nth-child(7){background:#07b012;}
+.kpi div:nth-child(8){background:#6366f1;}
+.kpi div:nth-child(9){background:#ff0101;}
+.kpi div:nth-child(10){background:#ff6a00;}
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+  .dashboard-grid{
+    grid-template-columns:1fr;
+  }
+
+  .summary{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  #exportArea{
+    width:1100px;
+  }
+}
+
+@media(max-width:600px){
+
+  body{
+    padding:15px 10px;
+  }
+
+  .dashboard-header{
+    padding:20px;
+  }
+
+  .summary{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .top-kpi{
+    grid-template-columns:1fr;
+  }
+
+  .chart-container{
+    height:320px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="dashboard-header">
+    <h2>All OVER PAYOUT REPORT</h2>
+    <p>Merchant-wise payout performance and transaction analytics</p>
+  </div>
+
+  <div class="upload-box">
+
+    <div class="upload-title">
+      Upload Payout Report
+    </div>
+
+    <div class="file-row">
+
+      <input
+        type="file"
+        id="fileInput"
+        class="file-input"
+        accept=".csv,.xlsx,.xls"
+      >
+
+      <div id="fileInfo" class="file-info">
+        CSV: Max 100 MB &nbsp; | &nbsp; Excel: Max 50 MB
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="top-kpi" id="topKpi"></div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="dashboard-grid">
+
+    <div class="box">
+
+      <div class="section-title">
+        Merchant Success Rate
+      </div>
+
+      <div class="section-subtitle">
+        Success percentage by merchant
+      </div>
+
+      <div class="chart-container">
+        <canvas id="chart"></canvas>
+      </div>
+
+    </div>
+
+    <div class="box">
+
+      <div class="section-title">
+        Payout Overview
+      </div>
+
+      <div class="section-subtitle">
+        Transaction distribution
+      </div>
+
+      <div style="height:390px;position:relative;">
+        <canvas id="statusChart"></canvas>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="box action-box">
+
+    <div class="section-title">
+      Report Tools
+    </div>
+
+    <div class="section-subtitle">
+      Generate or download the payout report
+    </div>
+
+    <div class="action-buttons">
+
+      <button onclick="generateReport()">
+        Generate Report
+      </button>
+
+      <button onclick="downloadImage()">
+        Download Image
+      </button>
+
+    </div>
+
+    <textarea id="report" rows="10"></textarea>
+
+  </div>
+
+  <div class="box table-box">
+
+    <div class="section-title">
+      Merchant Wise Report
+    </div>
+
+    <div class="section-subtitle">
+      Detailed merchant payout performance
+    </div>
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>Merchant</th>
+            <th>Success Amt</th>
+            <th>Success Rate</th>
+            <th>Total</th>
+            <th>Success</th>
+            <th>Failed</th>
+            <th>Pending</th>
+          </tr>
+
+        </thead>
+
+        <tbody id="table"></tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- EXPORT AREA - UNCHANGED -->
+
+<div id="exportArea">
+
+<div class="export-title">
+<h2>All OVER PAYOUT REPORT</h2>
+</div>
+
+<div class="kpi">
+<div>Total Txn<br><span id="t1"></span></div>
+<div>Success<br><span id="t2"></span></div>
+<div>Failed<br><span id="t3"></span></div>
+<div>Pending<br><span id="t4"></span></div>
+<div>Success Rate<br><span id="t5"></span></div>
+
+<div>Total Payout<br><span id="t6"></span></div>
+<div>Success Amt<br><span id="t7"></span></div>
+<div>Pending Amt<br><span id="t8"></span></div>
+<div>Failed Amt<br><span id="t9"></span></div>
+<div>Init Amt<br><span id="t10"></span></div>
+</div>
+
+<div id="expTable"></div>
+
+</div>
+
+
+<script>
+
+let data={}, totals={
+  t:0,
+  s:0,
+  f:0,
+  p:0,
+  totalAmt:0,
+  successAmt:0,
+  pendingAmt:0,
+  failedAmt:0,
+  initAmt:0
+};
+
+let chart;
+let statusChart;
+
+
+/* FILE UPLOAD */
+
+document.getElementById("fileInput").addEventListener("change", async e=>{
+
+  const file=e.target.files[0];
+
+  if(!file) return;
+
+  const fileName=file.name.toLowerCase();
+  const fileSize=file.size;
+
+  const isCSV=fileName.endsWith(".csv");
+  const isExcel=fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
+
+  const csvLimit=100*1024*1024;
+  const excelLimit=50*1024*1024;
+
+  const fileInfo=document.getElementById("fileInfo");
+
+  /* FILE TYPE */
+
+  if(!isCSV && !isExcel){
+
+    fileInfo.className="file-info file-error";
+
+    fileInfo.innerText="Invalid file. Please upload CSV or Excel file.";
+
+    e.target.value="";
+
+    return;
+  }
+
+  /* SIZE LIMIT */
+
+  if(isCSV && fileSize>csvLimit){
+
+    fileInfo.className="file-info file-error";
+
+    fileInfo.innerText=
+      "CSV file limit exceeded. Maximum allowed size is 100 MB.";
+
+    e.target.value="";
+
+    return;
+  }
+
+  if(isExcel && fileSize>excelLimit){
+
+    fileInfo.className="file-info file-error";
+
+    fileInfo.innerText=
+      "Excel file limit exceeded. Maximum allowed size is 50 MB.";
+
+    e.target.value="";
+
+    return;
+  }
+
+  const sizeMB=(fileSize/(1024*1024)).toFixed(2);
+
+  fileInfo.className="file-info file-success";
+
+  fileInfo.innerText=
+    "Loaded: "+file.name+" ("+sizeMB+" MB)";
+
+  /* RESET */
+
+  data={};
+
+  totals={
+    t:0,
+    s:0,
+    f:0,
+    p:0,
+    totalAmt:0,
+    successAmt:0,
+    pendingAmt:0,
+    failedAmt:0,
+    initAmt:0
+  };
+
+
+  /* CSV */
+
+  if(isCSV){
+
+    Papa.parse(file,{
+
+      header:true,
+
+      skipEmptyLines:true,
+
+      complete:function(res){
+
+        processRows(res.data);
+
+      },
+
+      error:function(){
+
+        fileInfo.className="file-info file-error";
+
+        fileInfo.innerText=
+          "Unable to read CSV file. Please check the file.";
+
+      }
+
+    });
+
+  }
+
+
+  /* EXCEL */
+
+  if(isExcel){
+
+    try{
+
+      const arrayBuffer=await file.arrayBuffer();
+
+      const workbook=XLSX.read(arrayBuffer,{
+        type:"array"
+      });
+
+      const firstSheet=
+        workbook.Sheets[workbook.SheetNames[0]];
+
+      const rows=XLSX.utils.sheet_to_json(firstSheet,{
+        defval:""
+      });
+
+      processRows(rows);
+
+    }
+    catch(error){
+
+      fileInfo.className="file-info file-error";
+
+      fileInfo.innerText=
+        "Unable to read Excel file. Please check the file.";
+
+    }
+
+  }
+
+});
+
+
+/* PROCESS DATA */
+
+function processRows(rows){
+
+  data={};
+
+  totals={
+    t:0,
+    s:0,
+    f:0,
+    p:0,
+    totalAmt:0,
+    successAmt:0,
+    pendingAmt:0,
+    failedAmt:0,
+    initAmt:0
+  };
+
+
+  rows.forEach(r=>{
+
+    let m=r["Merchant Name"];
+
+    let s=(r["Payout Status"]||"").toLowerCase().trim();
+
+    let amt=parseFloat(r["Total Amount"])||0;
+
+    if(!m) return;
+
+    m=String(m).trim();
+
+    if(!data[m]){
+
+      data[m]={
+        t:0,
+        s:0,
+        f:0,
+        p:0,
+        successAmt:0
+      };
+
+    }
+
+    data[m].t++;
+
+    totals.t++;
+
+    totals.totalAmt+=amt;
+
+
+    if(s==="success"){
+
+      data[m].s++;
+
+      data[m].successAmt+=amt;
+
+      totals.s++;
+
+      totals.successAmt+=amt;
+
+    }
+
+    else if(s==="failed"){
+
+      data[m].f++;
+
+      totals.f++;
+
+      totals.failedAmt+=amt;
+
+    }
+
+    else if(s==="pending"){
+
+      data[m].p++;
+
+      totals.p++;
+
+      totals.pendingAmt+=amt;
+
+    }
+
+    else if(s==="initializing"){
+
+      totals.initAmt+=amt;
+
+    }
+
+    else{
+
+      data[m].p++;
+
+      totals.p++;
+
+      totals.pendingAmt+=amt;
+
+    }
+
+  });
+
+
+  render();
+
+}
+
+
+/* RENDER */
+
+function render(){
+
+  let rate=
+    ((totals.s/totals.t)*100||0).toFixed(2);
+
+
+  document.getElementById("topKpi").innerHTML=`
+
+    <div>
+      <span class="kpi-label">TOTAL PAYOUT AMOUNT</span>
+      <span class="kpi-value">${totals.totalAmt.toFixed(2)}</span>
+    </div>
+
+    <div>
+      <span class="kpi-label">TOTAL SUCCESS AMOUNT</span>
+      <span class="kpi-value">${totals.successAmt.toFixed(2)}</span>
+    </div>
+
+    <div>
+      <span class="kpi-label">TOTAL PENDING AMOUNT</span>
+      <span class="kpi-value">${totals.pendingAmt.toFixed(2)}</span>
+    </div>
+
+    <div>
+      <span class="kpi-label">TOTAL FAILED AMOUNT</span>
+      <span class="kpi-value">${totals.failedAmt.toFixed(2)}</span>
+    </div>
+
+    <div>
+      <span class="kpi-label">TOTAL INITIALIZING AMOUNT</span>
+      <span class="kpi-value">${totals.initAmt.toFixed(2)}</span>
+    </div>
+
+  `;
+
+
+  document.getElementById("summary").innerHTML=`
+
+    <div class="card">
+      Total Txn
+      <span>${totals.t}</span>
+      <small>All transactions</small>
+    </div>
+
+    <div class="card">
+      Success
+      <span>${totals.s}</span>
+      <small>Successful</small>
+    </div>
+
+    <div class="card">
+      Failed
+      <span>${totals.f}</span>
+      <small>Failed</small>
+    </div>
+
+    <div class="card">
+      Pending
+      <span>${totals.p}</span>
+      <small>Pending</small>
+    </div>
+
+    <div class="card">
+      Success Rate
+      <span>${rate}%</span>
+      <small>Overall rate</small>
+    </div>
+
+  `;
+
+
+  let html="";
+  let labels=[];
+  let vals=[];
+
+
+  for(let m in data){
+
+    let d=data[m];
+
+    let r=
+      ((d.s/d.t)*100||0).toFixed(2);
+
+    labels.push(m);
+
+    vals.push(parseFloat(r));
+
+
+    html+=`
+
+      <tr>
+
+        <td>${escapeHTML(m)}</td>
+
+        <td>
+          ${d.successAmt
+            ? d.successAmt.toFixed(2)
+            : "0.00"}
+        </td>
+
+        <td>${r}%</td>
+
+        <td>${d.t}</td>
+
+        <td>${d.s}</td>
+
+        <td>${d.f}</td>
+
+        <td>${d.p}</td>
+
+      </tr>
+
+    `;
+
+  }
+
+
+  document.getElementById("table").innerHTML=html;
+
+
+  /* MAIN PROFESSIONAL CHART */
+
+  if(chart) chart.destroy();
+
+
+  chart=new Chart(
+    document.getElementById("chart"),
+    {
+
+      type:"bar",
+
+      data:{
+        labels:labels,
+
+        datasets:[{
+
+          label:"Success Rate",
+
+          data:vals,
+
+          backgroundColor:"rgba(37,99,235,.78)",
+
+          borderColor:"#2563eb",
+
+          borderWidth:1,
+
+          borderRadius:7,
+
+          maxBarThickness:42
+
+        }]
+
+      },
+
+      options:{
+
+        responsive:true,
+
+        maintainAspectRatio:false,
+
+        plugins:{
+
+          legend:{
+            display:false
+          },
+
+          tooltip:{
+
+            callbacks:{
+
+              label:function(context){
+
+                return " Success Rate: "+
+                  context.raw+"%";
+
+              }
+
+            }
+
+          }
+
+        },
+
+        scales:{
+
+          y:{
+
+            beginAtZero:true,
+
+            max:100,
+
+            grid:{
+              color:"rgba(148,163,184,.16)"
+            },
+
+            ticks:{
+
+              callback:function(value){
+
+                return value+"%";
+
+              }
+
+            }
+
+          },
+
+          x:{
+
+            grid:{
+              display:false
+            },
+
+            ticks:{
+
+              maxRotation:45,
+
+              minRotation:0
+
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+  );
+
+
+  /* STATUS DONUT */
+
+  if(statusChart) statusChart.destroy();
+
+
+  statusChart=new Chart(
+    document.getElementById("statusChart"),
+    {
+
+      type:"doughnut",
+
+      data:{
+
+        labels:[
+          "Success",
+          "Failed",
+          "Pending"
+        ],
+
+        datasets:[{
+
+          data:[
+            totals.s,
+            totals.f,
+            totals.p
+          ],
+
+          backgroundColor:[
+            "#16a34a",
+            "#dc2626",
+            "#f59e0b"
+          ],
+
+          borderWidth:0,
+
+          hoverOffset:6
+
+        }]
+
+      },
+
+      options:{
+
+        responsive:true,
+
+        maintainAspectRatio:false,
+
+        cutout:"68%",
+
+        plugins:{
+
+          legend:{
+
+            position:"bottom",
+
+            labels:{
+              padding:18,
+              usePointStyle:true
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+  );
+
+}
+
+
+/* REPORT */
+
+function generateReport(){
+
+  let date=new Date().toLocaleDateString();
+
+
+  let text=`DAILY PAYOUT REPORT (${date})
+
+TOTAL TXN: ${totals.t}
+SUCCESS: ${totals.s}
+FAILED: ${totals.f}
+PENDING: ${totals.p}
+
+TOTAL AMOUNT: ${totals.totalAmt}
+SUCCESS AMOUNT: ${totals.successAmt}
+PENDING AMOUNT: ${totals.pendingAmt}
+FAILED AMOUNT: ${totals.failedAmt}
+INITIALIZING AMOUNT: ${totals.initAmt}
+
+-------------------
+MERCHANT WISE REPORT
+-------------------
+`;
+
+
+  for(let m in data){
+
+    let d=data[m];
+
+    let r=
+      ((d.s/d.t)*100||0).toFixed(2);
+
+
+    text+=`
+
+${m}
+Total: ${d.t}
+Success: ${d.s}
+Failed: ${d.f}
+Pending: ${d.p}
+Success Amount: ${
+  d.successAmt
+    ? d.successAmt.toFixed(2)
+    : "0.00"
+}
+Success Rate: ${r}%
+-------------------
+`;
+
+  }
+
+
+  document.getElementById("report").value=text;
+
+}
+
+
+/* IMAGE EXPORT */
+
+function downloadImage(){
+
+  document.getElementById("t1").innerText=totals.t;
+
+  document.getElementById("t2").innerText=totals.s;
+
+  document.getElementById("t3").innerText=totals.f;
+
+  document.getElementById("t4").innerText=totals.p;
+
+  document.getElementById("t5").innerText=
+    ((totals.s/totals.t)*100||0).toFixed(2)+"%";
+
+
+  document.getElementById("t6").innerText=
+    totals.totalAmt.toFixed(2);
+
+  document.getElementById("t7").innerText=
+    totals.successAmt.toFixed(2);
+
+  document.getElementById("t8").innerText=
+    totals.pendingAmt.toFixed(2);
+
+  document.getElementById("t9").innerText=
+    totals.failedAmt.toFixed(2);
+
+  document.getElementById("t10").innerText=
+    totals.initAmt.toFixed(2);
+
+
+  let table="<table border='1' style='width:100%;border-collapse:collapse;text-align:center;font-size:12px'>";
+
+  table+="<tr>";
+
+  table+="<th>Merchant</th>";
+  table+="<th>Success Amt</th>";
+  table+="<th>Success Rate</th>";
+  table+="<th>Total</th>";
+  table+="<th>Success</th>";
+  table+="<th>Failed</th>";
+  table+="<th>Pending</th>";
+
+  table+="</tr>";
+
+
+  for(let m in data){
+
+    let d=data[m];
+
+    let r=
+      ((d.s/d.t)*100||0).toFixed(2);
+
+
+    table+=`
+
+      <tr>
+
+        <td>${escapeHTML(m)}</td>
+
+        <td>
+          ${d.successAmt
+            ? d.successAmt.toFixed(2)
+            : "0.00"}
+        </td>
+
+        <td>${r}%</td>
+
+        <td>${d.t}</td>
+
+        <td>${d.s}</td>
+
+        <td>${d.f}</td>
+
+        <td>${d.p}</td>
+
+      </tr>
+
+    `;
+
+  }
+
+
+  table+="</table>";
+
+
+  document.getElementById("expTable").innerHTML=table;
+
+
+  setTimeout(()=>{
+
+    html2canvas(
+      document.getElementById("exportArea"),
+      {
+        scale:3,
+        backgroundColor:"#fff"
+      }
+    ).then(canvas=>{
+
+      let a=document.createElement("a");
+
+      a.download="Payout_Report.png";
+
+      a.href=canvas.toDataURL();
+
+      a.click();
+
+    });
+
+  },500);
+
+}
+
+
+/* SECURITY / DISPLAY HELPER */
+
+function escapeHTML(value){
+
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+</script>
+
+</body>
+</html>
